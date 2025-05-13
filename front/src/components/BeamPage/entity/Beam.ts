@@ -1,15 +1,4 @@
-export class Support {
-    private readonly position: number;
-    constructor(position: number) {
-        if(position < 0) throw new Error(
-            "위치는 양수로 해주세요"
-        );
-        this.position = position;
-    }
-    public getPosition() {
-        return this.position;
-    }
-}
+import type {Support} from "./Support.ts";
 
 export class PointLoad {
     private readonly position: number;
