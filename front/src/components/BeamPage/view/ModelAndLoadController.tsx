@@ -1,12 +1,14 @@
 import styled from "@emotion/styled";
-import {useState} from "react";
+import {useContext, useState} from "react";
+import type {LoadsType} from "@/types/domain/Beam";
+import {BeamContext} from "@/contexts";
 
-type ModeModel = "beam" | "support"; // TODO: add section
-type ModeLoad = "pointLoad" | "moment" | "distributedLoad";
+type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
+type ModeLoad = LoadsType;
 type Mode = "none" | ModeModel | ModeLoad;
 
 interface Props {
-    setMode: React.dispatch<React.SetStateAction<Mode>>;
+    setMode: React.Dispatch<React.SetStateAction<Mode>>;
 }
 
 const ModelAndLoadController = () => {
@@ -18,8 +20,8 @@ const ModelAndLoadController = () => {
             return <BeamModelView setMode={setMode}/>
         case "support":
             return <SupportsModelView setMode={setMode}/>
-        case "pointLoad":
-            return <PointLoadModelView setMode={setMode}/>
+        // case "pointLoad":
+        //     return <PointLoadModelView setMode={setMode}/>
     }
 };
 
@@ -49,9 +51,26 @@ const NoneModeView = ({setMode}: Props) => {
 
 // Model View Section
 const BeamModelView = (props: Props) => {
+    const {beam} = useContext(BeamContext);
+    const [beamLength, setBeamLength] = useState<number>(beam.length);
     return (
         <S.Container>
             beam view
+            <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const length = Number(formData.get('beamLength'));
+                beam.changeLength(length);
+            }}>
+                <input
+                    name="beamLength"
+                    //TODO: string 으로 유지하면서 양수로 검증하도록 하기
+                    value={beamLength}
+                    onChange={(e) => {
+                        setBeamLength(Number(e.target.value));
+                    }}
+                />
+            </form>
             <S.MoveBackButton onClick={() => props.setMode("none")}>
                 backward
             </S.MoveBackButton>
@@ -71,15 +90,19 @@ const SupportsModelView = (props: Props) => {
     )
 }
 
+const NoneSelectBase = styled.div`
+    user-select: none;
+`;
+
 const S = {
-    Container: styled.div`
+    Container: styled(NoneSelectBase)`
         display: flex;
         flex-direction: column;
         padding: 1rem 2rem 1rem;
         align-items: center;
         min-width: 200px;
         background-color: tomato;
-        
+
         @media (min-width: 1024px) {
             width: 450px;
         }
@@ -88,16 +111,16 @@ const S = {
         display: flex;
         flex-direction: column;
     `,
-    Title: styled.h1`
+    Title: styled(NoneSelectBase)`
         margin: .2rem 0;
         font-size: 1.5rem;
     `,
-    SelectButton: styled.div`
+    SelectButton: styled(NoneSelectBase)`
         width: 100%;
         color: white;
     `,
-    MoveBackButton: styled.div`
-        
+    MoveBackButton: styled(NoneSelectBase)`
+
     `
 }
 

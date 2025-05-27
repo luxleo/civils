@@ -1,10 +1,10 @@
 import styled from '@emotion/styled'
-import BeamFormInput from "@/components/BeamPage/BeamFormInput.tsx";
+import BeamContainer from "@/components/BeamPage/BeamContainer";
 
 const BeamPage = () => {
     return (
         <S.Container>
-            <BeamFormInput/>
+            <BeamContainer/>
         </S.Container>
     );
 };

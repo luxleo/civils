@@ -1,13 +1,16 @@
 import styled from "@emotion/styled";
 import ModelAndLoadController from "./view/ModelAndLoadController.tsx";
 import ModelAndLoadView from "./view/ModelAndLoadView.tsx";
+import {BeamProvider} from "@/contexts";
 
-const BeamFormInput = () => {
+const BeamContainer = () => {
     return (
         <S.Container>
-            <ModelAndLoadController/>
-            <MainPanel/>
-            <ModelAndLoadView/>
+            <BeamProvider>
+                <ModelAndLoadController/>
+                <MainPanel/>
+                <ModelAndLoadView/>
+            </BeamProvider>
         </S.Container>
     );
 };
@@ -34,4 +37,4 @@ const S = {
         background-color: beige;
     `,
 }
-export default BeamFormInput;
+export default BeamContainer;
