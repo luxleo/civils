@@ -2,12 +2,13 @@ import styled from "@emotion/styled";
 import {useContext, useState} from "react";
 import type {LoadsType} from "@/types/domain/Beam";
 import {BeamContext} from "@/contexts";
+import BeamForm from "@/components/BeamPage/view/forms/BeamForm";
 
 type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
 type ModeLoad = LoadsType;
 type Mode = "none" | ModeModel | ModeLoad;
 
-interface Props {
+export interface ChangeModeProps {
     setMode: React.Dispatch<React.SetStateAction<Mode>>;
 }
 
@@ -17,7 +18,7 @@ const ModelAndLoadController = () => {
         case "none":
             return <NoneModeView setMode={setMode}/>
         case "beam":
-            return <BeamModelView setMode={setMode}/>
+            return <BeamForm setMode={setMode}/>
         case "support":
             return <SupportsModelView setMode={setMode}/>
         // case "pointLoad":
@@ -25,7 +26,7 @@ const ModelAndLoadController = () => {
     }
 };
 
-const NoneModeView = ({setMode}: Props) => {
+const NoneModeView = ({setMode}: ChangeModeProps) => {
     return (
         <S.Container>
             <S.Title>Model</S.Title>
@@ -50,7 +51,7 @@ const NoneModeView = ({setMode}: Props) => {
 }
 
 // Model View Section
-const BeamModelView = (props: Props) => {
+const BeamModelView = (props: ChangeModeProps) => {
     const {beam} = useContext(BeamContext);
     const [beamLength, setBeamLength] = useState<number>(beam.length);
     return (
@@ -79,7 +80,7 @@ const BeamModelView = (props: Props) => {
 }
 
 // Loads View Section
-const SupportsModelView = (props: Props) => {
+const SupportsModelView = (props: ChangeModeProps) => {
     return (
         <S.Container>
             supports view
