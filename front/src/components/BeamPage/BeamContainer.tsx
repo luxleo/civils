@@ -6,6 +6,7 @@ import {BeamProvider} from "@/contexts";
 const BeamContainer = () => {
     return (
         <S.Container>
+            // TODO: ModelAndLoadView에서 mode 조절 하는 context 따로 파기
             <BeamProvider>
                 <ModelAndLoadController/>
                 <MainPanel/>

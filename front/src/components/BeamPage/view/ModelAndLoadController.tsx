@@ -3,6 +3,8 @@ import {useContext, useState} from "react";
 import type {LoadsType} from "@/types/domain/Beam";
 import {BeamContext} from "@/contexts";
 import BeamForm from "@/components/BeamPage/view/forms/BeamForm";
+import SupportForm from "@/components/BeamPage/view/forms/SupportForm";
+import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
 
 type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
 type ModeLoad = LoadsType;
@@ -13,6 +15,13 @@ export interface ChangeModeProps {
 }
 
 const ModelAndLoadController = () => {
+    return (
+        <S.Container>
+            <Renderer/>
+        </S.Container>
+    )
+}
+const Renderer = () => {
     const [mode, setMode] = useState<Mode>("none");
     switch (mode) {
         case "none":
@@ -20,7 +29,7 @@ const ModelAndLoadController = () => {
         case "beam":
             return <BeamForm setMode={setMode}/>
         case "support":
-            return <SupportsModelView setMode={setMode}/>
+            return <SupportForm setMode={setMode}/>
         // case "pointLoad":
         //     return <PointLoadModelView setMode={setMode}/>
     }
@@ -28,7 +37,7 @@ const ModelAndLoadController = () => {
 
 const NoneModeView = ({setMode}: ChangeModeProps) => {
     return (
-        <S.Container>
+        <div css={formContainer}>
             <S.Title>Model</S.Title>
             <S.SelectButton onClick={() => setMode("beam")}>
                 Beam
@@ -46,36 +55,7 @@ const NoneModeView = ({setMode}: ChangeModeProps) => {
             <S.SelectButton>
                 Distributed Loads
             </S.SelectButton>
-        </S.Container>
-    )
-}
-
-// Model View Section
-const BeamModelView = (props: ChangeModeProps) => {
-    const {beam} = useContext(BeamContext);
-    const [beamLength, setBeamLength] = useState<number>(beam.length);
-    return (
-        <S.Container>
-            beam view
-            <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                const length = Number(formData.get('beamLength'));
-                beam.changeLength(length);
-            }}>
-                <input
-                    name="beamLength"
-                    //TODO: string 으로 유지하면서 양수로 검증하도록 하기
-                    value={beamLength}
-                    onChange={(e) => {
-                        setBeamLength(Number(e.target.value));
-                    }}
-                />
-            </form>
-            <S.MoveBackButton onClick={() => props.setMode("none")}>
-                backward
-            </S.MoveBackButton>
-        </S.Container>
+        </div>
     )
 }
 

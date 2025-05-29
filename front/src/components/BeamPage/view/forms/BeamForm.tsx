@@ -7,6 +7,7 @@ import type {ChangeModeProps} from "@/components/BeamPage/view/ModelAndLoadContr
 import Button from "@/components/common/Button/Button";
 import {Input} from "@/components/common/Input/Input";
 import {zodResolver} from "@hookform/resolvers/zod";
+import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
 
 const FormSchema = z.object({
     length: z.number().gte(0, {message: "길이는 양수이어야합니다."})
@@ -21,16 +22,18 @@ const BeamForm = (props: ChangeModeProps) => {
         handleSubmit,
         // trigger,
         // getValues,
-        // formState: {errors},
+        formState: {errors},
     } = useForm<Inputs>({defaultValues: {length: 0}, resolver: zodResolver(FormSchema)});
     const onSubmit: SubmitHandler<Inputs> = (data) => {
-        console.log("Form submitted with data:", JSON.stringify(data));
         beam.changeLength(data.length);
     }
+    console.log("i rendered");
     return (
-        <div css={S.formContainer}>
+        <div css={formContainer}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <Input<Inputs> name={"길이"} label="length" register={register} required/>
+                <Input<Inputs> name={"길이"} label="length" register={register}
+                               registerOptions={{required: true, valueAsNumber: true}}/>
+                {errors.length && <span>{errors.length.message}</span>}
                 <input type="submit" value="Submit"/>
             </form>
             <Button onClick={() => props.setMode("none")}>

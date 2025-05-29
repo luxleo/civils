@@ -1,6 +1,6 @@
 import type {InputVariants} from "@/components/common/Input/Input.type";
 import type {RefObject} from "react";
-import type {FieldValues, Path} from "react-hook-form";
+import type {FieldValues, Path, RegisterOptions} from "react-hook-form";
 import * as S from "./Input.styled";
 import type {UseFormRegister} from "react-hook-form";
 
@@ -28,14 +28,14 @@ interface InputProps<T extends FieldValues> {
     name: string;
     label: Path<T>;
     register: UseFormRegister<T>;
-    required?: boolean;
+    registerOptions?: Partial<RegisterOptions<T>>;
 }
 
-export const Input = <T extends FieldValues>({name, label, register, required = false}: InputProps<T>) => {
+export const Input = <T extends FieldValues>({name, label, register, registerOptions = {}}: InputProps<T>) => {
     return (
         <>
             <label>{name}</label>
-            <input css={S.Input} {...register(label, {required})}/>
+            <input css={S.Input} {...register(label, {...registerOptions})}/>
         </>
     );
 }

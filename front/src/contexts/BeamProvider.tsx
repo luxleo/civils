@@ -8,7 +8,6 @@ export type BeamContext = {
 }
 
 export type SupportContext = {
-    id: string;
     type: SupportsType;
     position: number;
 }
@@ -43,7 +42,6 @@ export interface BeamContextProps {
     supports: Map<number, SupportContext>;
     loads: Map<number, LoadContext>;
     loadId: number;
-    supportId: number;
     addSupport: (support: SupportContext) => void;
     addLoad: (load: LoadContext) => void;
     removeSupport: (id: number) => void;
@@ -70,16 +68,14 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
     const [supports, setSupports] = useState<Map<number, SupportContext>>(new Map());
     const [loads, setLoads] = useState<Map<number, LoadContext>>(new Map());
     const [loadId, setLoadId] = useState<number>(0);
-    const [supportId, setSupportId] = useState<number>(0);
 
     const addSupport = useCallback((support: SupportContext) => {
         setSupports(prev => {
             const newSupports = new Map(prev);
-            newSupports.set(supportId, support);
+            newSupports.set(support.position, support);
             return newSupports;
         });
-        setSupportId(prev => prev + 1);
-    }, [supportId, setSupports, setSupportId]);
+    }, [setSupports]);
 
     const addLoad = useCallback((load: LoadContext) => {
         setLoads(prev => {
@@ -90,10 +86,10 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
         setLoadId(prev => prev + 1);
     }, [loadId, setLoads, setLoadId]);
 
-    const removeSupport = useCallback((id: number) => {
+    const removeSupport = useCallback((position: number) => {
         setSupports(prev => {
             const newSupports = new Map(prev);
-            newSupports.delete(id);
+            newSupports.delete(position);
             return newSupports;
         });
     }, [setSupports]);
@@ -151,8 +147,10 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
     }, [setLoads]);
 
     const isBeamInitialized = useCallback(() => {
-        return beam.length > 0;
-    }, [beam]);
+        // Using supports.size in the calculation ensures this function
+        // will re-evaluate when supports change
+        return beam.length > 0 && supports.size >= 0;
+    }, [beam.length, supports.size]);
 
     return (
         <BeamContext.Provider value={{
@@ -160,7 +158,6 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             supports,
             loads,
             loadId,
-            supportId,
             addSupport,
             addLoad,
             removeSupport,
