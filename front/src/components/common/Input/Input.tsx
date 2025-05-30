@@ -31,11 +31,12 @@ interface InputProps<T extends FieldValues> {
     registerOptions?: Partial<RegisterOptions<T>>;
 }
 
-export const Input = <T extends FieldValues>({name, label, register, registerOptions = {}}: InputProps<T>) => {
-    return (
-        <>
-            <label>{name}</label>
-            <input css={S.Input} {...register(label, {...registerOptions})}/>
-        </>
-    );
-}
+export const Input =
+    <T extends FieldValues>({name, label, register, registerOptions = {}}: InputProps<T>) => {
+        return (
+            <>
+                <label>{name}</label>
+                <input css={S.Input} {...register(label, {...registerOptions})}/>
+            </>
+        );
+    }

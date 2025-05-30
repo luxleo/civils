@@ -1,13 +1,12 @@
 import styled from "@emotion/styled";
-import {useContext, useState} from "react";
-import type {LoadsType} from "@/types/domain/Beam";
-import {BeamContext} from "@/contexts";
+import {useState} from "react";
 import BeamForm from "@/components/BeamPage/view/forms/BeamForm";
 import SupportForm from "@/components/BeamPage/view/forms/SupportForm";
 import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
+import LoadsForm from "@/components/BeamPage/view/forms/LoadsForm";
 
 type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
-type ModeLoad = LoadsType;
+type ModeLoad = "loads";
 type Mode = "none" | ModeModel | ModeLoad;
 
 export interface ChangeModeProps {
@@ -30,8 +29,8 @@ const Renderer = () => {
             return <BeamForm setMode={setMode}/>
         case "support":
             return <SupportForm setMode={setMode}/>
-        // case "pointLoad":
-        //     return <PointLoadModelView setMode={setMode}/>
+        case "loads":
+            return <LoadsForm setMode={setMode}/>
     }
 };
 
@@ -46,14 +45,8 @@ const NoneModeView = ({setMode}: ChangeModeProps) => {
                 Support
             </S.SelectButton>
             <S.Title>Loads</S.Title>
-            <S.SelectButton>
-                Point Loads
-            </S.SelectButton>
-            <S.SelectButton>
-                Moments
-            </S.SelectButton>
-            <S.SelectButton>
-                Distributed Loads
+            <S.SelectButton onClick={() => setMode("loads")}>
+                Loads
             </S.SelectButton>
         </div>
     )

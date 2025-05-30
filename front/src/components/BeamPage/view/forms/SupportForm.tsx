@@ -13,10 +13,6 @@ type SupportOption = {
     name: string;
     type: SupportsType;
 }
-type SupportPayload = {
-    type: SupportsType;
-    position: number;
-}
 const supportOptions: SupportOption[] = [
     {name: "롤러", type: "roller"},
     {name: "핀", type: "pinned"},
@@ -35,10 +31,7 @@ const SupportForm = (props: ChangeModeProps) => {
         addSupport,
         isBeamInitialized
     } = useContext(BeamContext);
-    const [supportInfo, setSupportInfo] = useState<SupportPayload>({
-        type: "pinned",
-        position: 0,
-    });
+    const [supportType, setSupportType] = useState<SupportsType>("pinned");
     const {
         register,
         handleSubmit,
@@ -48,6 +41,9 @@ const SupportForm = (props: ChangeModeProps) => {
         defaultValues: {position: 0},
         resolver: zodResolver(FormSchema)
     });
+    const handleSupportTypeChange = (type: SupportsType) => {
+        setSupportType(type);
+    }
     const onSubmit: SubmitHandler<Input> = (data) => {
         if (!isBeamInitialized()) {
             setError("position", {message: "보를 먼저 생성해주세요.", type: "manual"});
@@ -63,13 +59,15 @@ const SupportForm = (props: ChangeModeProps) => {
                 return;
             }
         }
-        addSupport({position: data.position, type: supportInfo.type})
+        addSupport({position: data.position, type: supportType})
     }
     console.log("SupportForm rendered");
     return (
         <div css={formContainer}>
             <div css={S.SelectContainer}>
-                {supportOptions.map(support => <SupportOption key={support.name} support={support}/>)}
+                {supportOptions.map(support => <SupportOption key={support.name} support={support}
+                                                              isFocused={support.type === supportType}
+                                                              changeSupportType={handleSupportTypeChange}/>)}
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Input name={"위치"} label="position" register={register}
@@ -85,11 +83,16 @@ const SupportForm = (props: ChangeModeProps) => {
 
 interface SupportOptionProps {
     support: SupportOption;
+    isFocused: boolean;
+    changeSupportType: (type: SupportsType) => void;
 }
 
-const SupportOption = ({support}: SupportOptionProps) => {
+const SupportOption = ({support, changeSupportType, isFocused}: SupportOptionProps) => {
     return (
-        <div>
+        <div 
+            css={[S.SupportOptionItem, isFocused && S.FocusedSupportOption]} 
+            onClick={() => changeSupportType(support.type)}
+        >
             {support.name}
         </div>
     )
@@ -100,6 +103,25 @@ const S = {
         width: 100%;
         display: flex;
         gap: 3px;
+    `,
+    SupportOptionItem: css`
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        background-color: #f5f5f5;
+
+        &:hover {
+            background-color: #e0e0e0;
+        }
+    `,
+    FocusedSupportOption: css`
+        background-color: #4a90e2;
+        color: white;
+
+        &:hover {
+            background-color: #3a80d2;
+        }
     `
 }
 
