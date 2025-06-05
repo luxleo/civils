@@ -70,7 +70,7 @@ const SupportForm = (props: ChangeModeProps) => {
                                                               changeSupportType={handleSupportTypeChange}/>)}
             </div>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <Input name={"위치"} label="position" register={register}
+                <Input label={"위치"} fieldName="position" register={register}
                        registerOptions={{required: true, valueAsNumber: true}}/>
                 {errors.position && <span>{errors.position.message}</span>}
             </form>
@@ -89,8 +89,8 @@ interface SupportOptionProps {
 
 const SupportOption = ({support, changeSupportType, isFocused}: SupportOptionProps) => {
     return (
-        <div 
-            css={[S.SupportOptionItem, isFocused && S.FocusedSupportOption]} 
+        <div
+            css={[S.SupportOptionItem, isFocused && S.FocusedSupportOption]}
             onClick={() => changeSupportType(support.type)}
         >
             {support.name}

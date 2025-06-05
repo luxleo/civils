@@ -14,10 +14,13 @@ export type SupportContext = {
 
 // Change LoadId to be an object type
 
+export type LoadDirection = 'upward' | 'downward';
+
 export type PointLoadContext = {
     type: 'pointLoad';
     position: number;
     magnitude: number;
+    direction: LoadDirection;
 }
 
 export type DistributedLoadContext = {
@@ -26,6 +29,7 @@ export type DistributedLoadContext = {
     endMagnitude: number;
     startPosition: number;
     endPosition: number;
+    direction: LoadDirection;
 }
 
 export type AngledLoadContext = {
@@ -33,15 +37,17 @@ export type AngledLoadContext = {
     magnitude: number;
     position: number;
     angle: number;
+    direction: LoadDirection;
 }
 
 export type LoadContext = PointLoadContext | DistributedLoadContext | AngledLoadContext;
 
+//INFO: support의 경우 position 이 중첩될 수 없기 때문에 별도의 supportId 가 필요하지 않다.
+// Load 의 경우 같은 position에도 중첩될 수 있으므로 LoadId를 통하여 구분한다.
 export interface BeamContextProps {
     beam: BeamContext;
     supports: Map<number, SupportContext>;
     loads: Map<number, LoadContext>;
-    loadId: number;
     addSupport: (support: SupportContext) => void;
     addLoad: (load: LoadContext) => void;
     removeSupport: (id: number) => void;
@@ -157,7 +163,6 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             beam,
             supports,
             loads,
-            loadId,
             addSupport,
             addLoad,
             removeSupport,

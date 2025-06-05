@@ -1,11 +1,11 @@
 import styled from "@emotion/styled";
 import {useContext, memo, useCallback} from "react";
-import {BeamContext, type SupportContext} from "@/contexts";
+import {BeamContext, type LoadContext, type PointLoadContext, type SupportContext} from "@/contexts";
 import {css} from "@emotion/react";
 import Button from "@/components/common/Button/Button";
 
 const ModelAndLoadView = () => {
-    const {beam, supports, isBeamInitialized, removeSupport, updateSupport} = useContext(BeamContext);
+    const {beam, supports, isBeamInitialized, removeSupport, updateSupport, loads} = useContext(BeamContext);
     console.log("ModelAndLoadView " + supports.size);
     if (isBeamInitialized()) {
         console.log("ModelAndLoadView inner " + supports.size);
@@ -20,6 +20,7 @@ const ModelAndLoadView = () => {
                     deleteHandler={removeSupport}
                     updateHandler={updateSupport}
                 />
+                <LoadsListView loads={loads}/>
             </S.Container>
         );
     } else {
@@ -33,14 +34,6 @@ const LoadsViewStyle = {
     Container: css`
         display: flex;
     `
-}
-
-const LoadsView = () => {
-    return (
-        <div css={LoadsViewStyle.Container}>
-            loads view
-        </div>
-    )
 }
 
 interface SupportsListViewProps {
@@ -95,7 +88,6 @@ const SupportsListView = ({
                               deleteHandler,
                               // updateHandler
                           }: SupportsListViewProps) => {
-    console.log("SupportsListView " + supports.size);
 
     return (
         <>
@@ -109,6 +101,50 @@ const SupportsListView = ({
                         onDelete={deleteHandler}
                         // onUpdate={updateHandler}
                     />
+                ))}
+            </div>
+        </>
+    )
+}
+
+interface LoadsListViewProps {
+    loads: Map<number, LoadContext>;
+}
+
+interface LoadItemProps {
+    loadId: number;
+    load: LoadContext;
+}
+
+const PointLoadView = (props: LoadItemProps) => {
+    const loadId = props.loadId;
+    const pointLoad = props.load as PointLoadContext;
+    return (
+        <div>
+            {pointLoad.type + '-' + pointLoad.position + '-' + pointLoad.magnitude + 'kN'}
+        </div>
+    )
+}
+
+const LoadItemController = ({
+                                loadId, load
+                            }: LoadItemProps) => {
+    if (load.type === "pointLoad") {
+        return <PointLoadView loadId={loadId} load={load}/>
+    } else {
+        return <div>undefined load</div>
+    }
+}
+
+const LoadsListView = ({
+                           loads
+                       }: LoadsListViewProps) => {
+    return (
+        <>
+            <h1>Loads List</h1>
+            <div>
+                {Array.from(loads.entries()).map(([loadId, load]) => (
+                    <LoadItemController loadId={loadId} load={load} key={"load" + loadId}/>
                 ))}
             </div>
         </>

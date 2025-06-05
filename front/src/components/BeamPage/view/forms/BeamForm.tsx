@@ -31,7 +31,7 @@ const BeamForm = (props: ChangeModeProps) => {
     return (
         <div css={formContainer}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <Input<Inputs> name={"길이"} label="length" register={register}
+                <Input<Inputs> label={"길이"} fieldName="length" register={register}
                                registerOptions={{required: true, valueAsNumber: true}}/>
                 {errors.length && <span>{errors.length.message}</span>}
                 <input type="submit" value="Submit"/>
