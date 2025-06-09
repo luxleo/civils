@@ -1,9 +1,9 @@
 import styled from "@emotion/styled";
 import {useState} from "react";
-import BeamForm from "@/components/BeamPage/view/forms/BeamForm";
-import SupportForm from "@/components/BeamPage/view/forms/SupportForm";
-import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
-import LoadsForm from "@/components/BeamPage/view/forms/LoadsForm";
+import BeamForm from "@/pages/BeamPage/view/ElementsController/forms/BeamForm";
+import SupportForm from "./forms/SupportForm";
+import LoadsForm from "./forms/LoadsForm";
+import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
 
 type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
 type ModeLoad = "loads";
@@ -13,7 +13,7 @@ export interface ChangeModeProps {
     setMode: React.Dispatch<React.SetStateAction<Mode>>;
 }
 
-const ModelAndLoadController = () => {
+const ElementsController = () => {
     return (
         <S.Container>
             <Renderer/>
@@ -98,4 +98,4 @@ const S = {
     `
 }
 
-export default ModelAndLoadController;
+export default ElementsController;

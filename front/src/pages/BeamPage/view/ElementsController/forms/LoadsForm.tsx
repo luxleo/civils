@@ -1,15 +1,15 @@
-import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
 import {useContext, useState} from "react";
 import type {LoadsType} from "@/types/domain/Beam";
-import type {ChangeModeProps} from "@/components/BeamPage/view/ModelAndLoadController";
 import Button from "@/components/common/Button/Button";
-import {BeamContext, PointLoadContext} from "@/contexts";
+import {BeamContext, type PointLoadContext} from "@/contexts";
 import {z} from "zod";
 import {css} from "@emotion/react";
 import {Input} from "@/components/common/Input/Input";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {LoadDirection} from "@/contexts/BeamProvider";
+import type {LoadDirection} from "@/contexts/BeamProvider";
+import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
+import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
 
 
 const LoadsForm = (props: ChangeModeProps) => {

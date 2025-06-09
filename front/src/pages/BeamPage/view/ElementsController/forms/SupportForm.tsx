@@ -1,13 +1,13 @@
 import {css} from "@emotion/react";
-import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
 import {useContext, useState} from "react";
 import {BeamContext} from "@/contexts";
 import {z} from "zod";
 import {useForm, type SubmitHandler} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Input} from "@/components/common/Input/Input";
-import type {ChangeModeProps} from "@/components/BeamPage/view/ModelAndLoadController";
 import type {SupportsType} from "@/types/domain/Beam";
+import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
+import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
 
 type SupportOption = {
     name: string;

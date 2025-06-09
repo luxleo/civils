@@ -1,10 +1,13 @@
 import styled from '@emotion/styled'
-import BeamContainer from "@/components/BeamPage/BeamContainer";
+import BeamContainer from "@/pages/BeamPage/view/BeamContainer";
+import {BeamProvider} from "@/contexts";
 
 const BeamPage = () => {
     return (
         <S.Container>
-            <BeamContainer/>
+            <BeamProvider>
+                <BeamContainer/>
+            </BeamProvider>
         </S.Container>
     );
 };

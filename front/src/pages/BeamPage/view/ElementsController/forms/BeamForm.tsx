@@ -3,11 +3,11 @@ import {BeamContext} from "@/contexts";
 import {css} from "@emotion/react";
 import {z} from "zod";
 import {type SubmitHandler, useForm} from "react-hook-form";
-import type {ChangeModeProps} from "@/components/BeamPage/view/ModelAndLoadController";
 import Button from "@/components/common/Button/Button";
 import {Input} from "@/components/common/Input/Input";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {formContainer} from "@/components/BeamPage/view/forms/common.style.";
+import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
+import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
 
 const FormSchema = z.object({
     length: z.number().gte(0, {message: "길이는 양수이어야합니다."})
@@ -20,8 +20,6 @@ const BeamForm = (props: ChangeModeProps) => {
     const {
         register,
         handleSubmit,
-        // trigger,
-        // getValues,
         formState: {errors},
     } = useForm<Inputs>({defaultValues: {length: 0}, resolver: zodResolver(FormSchema)});
     const onSubmit: SubmitHandler<Inputs> = (data) => {
