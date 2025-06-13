@@ -1,7 +1,7 @@
 import {FixedSupport, type ReactionForces, type Support} from "./Support.ts";
-import {type Load, type AngledLoad, PointLoad, DistributedLoad} from "./Load.ts";
+import {type Load, type AngledPointLoad, PointLoadImpl, DistributedLoadImpl} from "./Load.ts";
 
-export interface Beam {
+export interface BeamInterface {
     calculateReactions(supports: Support[], loads: Load[]): void;
 
     generateBendingMomentAtPoint(position: number, supports: Support[], loads: Load[]): number;
@@ -11,7 +11,7 @@ export interface Beam {
     getLength(): number;
 }
 
-export class StaticallyDeterminedBeam implements Beam {
+export class Beam implements BeamInterface {
     private length: number;
 
     constructor(length: number) {
@@ -36,28 +36,20 @@ export class StaticallyDeterminedBeam implements Beam {
         // 지지대 반력에 의한 모멘트 고려
         for (const support of supports) {
             // 지지대가 계산 지점보다 왼쪽에 있을 경우 (단면법에 따라)
-            if (support.getPosition() <= position) {
-                // 수직 반력에 의한 모멘트 계산
-                bendingMoment += support.getVerticalForce() * (position - support.getPosition());
-
-                // 고정단 지지대의 경우 모멘트 반력도 고려
-                if ('getMoment' in support && typeof support.getMoment === 'function') {
-                    bendingMoment += support.getMoment();
-                }
-            }
+            bendingMoment += support.calculateMomentAtPoint(position);
         }
 
         // 모든 하중에 의한 모멘트 고려
         for (const load of loads) {
             // 집중하중 처리
-            if (load instanceof PointLoad) {
+            if (load instanceof PointLoadImpl) {
                 // 하중이 계산 지점보다 왼쪽에 있을 경우에만 고려
                 if (load.getPosition() <= position) {
-                    bendingMoment -= load.getMagnitude() * (position - load.getPosition());
+                    bendingMoment += load.calculateShearForce() * (position - load.getPosition());
                 }
             }
             // 분포하중 처리
-            else if (load instanceof DistributedLoad) {
+            else if (load instanceof DistributedLoadImpl) {
                 const x1 = load.getStartPosition();
                 const x2 = load.getEndPosition();
                 const w1 = load.getStartMagnitude();
@@ -115,14 +107,14 @@ export class StaticallyDeterminedBeam implements Beam {
         // 모든 하중 고려 (집중하중 및 분포하중)
         for (const load of loads) {
             // 집중하중 처리
-            if (load instanceof PointLoad) {
+            if (load instanceof PointLoadImpl) {
                 // 하중이 계산 지점보다 왼쪽에 있을 경우에만 고려
                 if (load.getPosition() <= position) {
                     shearForce -= load.getMagnitude();
                 }
             }
             // 분포하중 처리
-            else if (load instanceof DistributedLoad) {
+            else if (load instanceof DistributedLoadImpl) {
                 const x1 = load.getStartPosition();
                 const x2 = load.getEndPosition();
                 const w1 = load.getStartMagnitude();
@@ -188,14 +180,14 @@ export class StaticallyDeterminedBeam implements Beam {
 
         for (const load of loads) {
             // Handle vertical forces for all types of loads
-            reactionForces.verticalForce -= load.getEquivalentForce();
+            reactionForces.verticalForce -= load.calculateShearForce();
 
             // Handle moments for all types of loads
             reactionForces.moment! -= load.getEquivalentMomentAt(support.getPosition());
 
             // Handle horizontal forces for angled loads
             if ('getHorizontalForce' in load) {
-                const angledLoad = load as AngledLoad;
+                const angledLoad = load as AngledPointLoad;
                 reactionForces.horizontalForce! -= angledLoad.getHorizontalForce();
             }
         }
@@ -222,7 +214,7 @@ export class StaticallyDeterminedBeam implements Beam {
 
         for (const load of loads) {
             // Sum up all vertical forces
-            totalVerticalForce += load.getEquivalentForce();
+            totalVerticalForce += load.calculateShearForce();
 
             // Calculate moment about support1 for each load
             totalMomentAboutSupport1 += load.getEquivalentMomentAt(support1.getPosition());
@@ -246,4 +238,28 @@ export class StaticallyDeterminedBeam implements Beam {
             verticalForce: verticalForceAtSupport2
         });
     }
+}
+
+export class StaticallyIndeterminateBeam implements BeamInterface {
+    private readonly length: number;
+
+    constructor(length: number) {
+        this.length = length;
+    }
+
+    calculateReactions(supports: Support[], loads: Load[]): void {
+    }
+
+    generateBendingMomentAtPoint(position: number, supports: Support[], loads: Load[]): number {
+        return 0;
+    }
+
+    generateShearForceAtPoint(position: number, supports: Support[], loads: Load[]): number {
+        return 0;
+    }
+
+    getLength(): number {
+        return 0;
+    }
+
 }

@@ -1,15 +1,4 @@
-// /**
-//  * Load와 동등한 효과를 가지는 Point load를 반환한다.
-//  */
-// export type EquivalentForce = {
-//     /**
-//      * positive number: downward
-//      *
-//      * negative number: upward
-//      */
-//     magnitude: number;
-//     position: number;
-// }
+import type {LoadDirection} from "@/contexts/BeamProvider";
 
 export type PointLoadInfo = {
     magnitude: number;
@@ -24,41 +13,60 @@ export type DistributedLoadInfo = {
 }
 
 export interface Load {
-    getEquivalentForce: () => number;
+    calculateShearForce: () => number;
     getEquivalentMomentAt: (position: number) => number;
     getPosition?: () => number;
 }
 
-export interface AngledLoad extends Load {
+export interface AngledPointLoad extends Load {
     getHorizontalForce: () => number;
 }
 
-export class PointLoad implements Load {
+export interface DistributedLoad extends Load {
+    getEquivalentForce: () => number;
+}
+
+export class PointLoadImpl implements Load {
     private readonly magnitude: number;
     private readonly position: number;
-    constructor(magnitude: number, position: number) {
+    private readonly direction: LoadDirection;
+
+    constructor(magnitude: number, position: number, direction: LoadDirection) {
         this.magnitude = magnitude;
         this.position = position;
+        this.direction = direction;
+    }
+
+    public calculateShearForce() {
+        if (this.direction === 'upward') {
+            return this.magnitude;
+        } else {
+            return -this.magnitude;
+        }
     }
 
     public getEquivalentForce() {
         return this.magnitude;
     }
+
     public getEquivalentMomentAt(position: number): number {
         return this.magnitude * (this.position - position);
     }
+
     public getPosition(): number {
         return this.position;
     }
+
     public getMagnitude(): number {
         return this.magnitude;
     }
 }
 
-export class AngledPointLoad implements AngledLoad {
+export class AngledPointLoadImpl implements AngledPointLoad {
     private readonly magnitude: number;
     private readonly position: number;
     private readonly angle: number;
+
     constructor(magnitude: number, position: number, angle: number) {
         this.magnitude = magnitude;
         this.position = position;
@@ -81,7 +89,7 @@ export class AngledPointLoad implements AngledLoad {
 /**
  * @constructing
  */
-export class DistributedLoad implements Load {
+export class DistributedLoadImpl implements DistributedLoadImpl {
     private startPosition: number = 0;
     private endPosition: number = 0;
     private startMagnitude: number = 0;
@@ -90,30 +98,31 @@ export class DistributedLoad implements Load {
     private constructor() {
     }
 
-    public static createUniform(magnitude: number, startPosition: number, endPosition: number): DistributedLoad {
+    public static createUniform(magnitude: number, startPosition: number, endPosition: number): DistributedLoadImpl {
         return this.create(magnitude, magnitude, startPosition, endPosition);
     }
-    public static create(startMagnitude: number, endMagnitude: number, startPosition: number, endPosition: number): DistributedLoad {
-        const result = new DistributedLoad();
+
+    public static create(startMagnitude: number, endMagnitude: number, startPosition: number, endPosition: number): DistributedLoadImpl {
+        const result = new DistributedLoadImpl();
         result.startMagnitude = startMagnitude;
         result.endMagnitude = endMagnitude;
         result.startPosition = startPosition;
         result.endPosition = endPosition;
         return result;
     }
-    
+
     public getStartPosition(): number {
         return this.startPosition;
     }
-    
+
     public getEndPosition(): number {
         return this.endPosition;
     }
-    
+
     public getStartMagnitude(): number {
         return this.startMagnitude;
     }
-    
+
     public getEndMagnitude(): number {
         return this.endMagnitude;
     }
@@ -142,9 +151,9 @@ export class DistributedLoad implements Load {
             // For a trapezoidal load, the centroid is given by the formula:
             // x_c = x_1 + (x_2 - x_1) * (2*w_1 + w_2) / (3 * (w_1 + w_2))
             // where x_1, x_2 are the start and end positions, and w_1, w_2 are the start and end magnitudes
-            centroidPosition = this.startPosition + 
-                (this.endPosition - this.startPosition) * 
-                (2 * this.startMagnitude + this.endMagnitude) / 
+            centroidPosition = this.startPosition +
+                (this.endPosition - this.startPosition) *
+                (2 * this.startMagnitude + this.endMagnitude) /
                 (3 * (this.startMagnitude + this.endMagnitude));
         }
 

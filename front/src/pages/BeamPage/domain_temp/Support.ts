@@ -9,6 +9,8 @@ export type Constraint = typeof ConstraintKeys[keyof typeof ConstraintKeys];
 export interface Support {
     getPosition(): number;
 
+    calculateMomentAtPoint(pointAt: number): number;
+
     /**
      * Calculates the reaction forces at this support
      * @returns An object containing the reaction forces
@@ -41,11 +43,21 @@ export class FixedSupport implements Support {
     private reactionForces: ReactionForces = {
         horizontalForce: 0,
         verticalForce: 0,
+        moment: 0
     };
-    moment: 0
 
     constructor(position: number) {
         this.position = position;
+    }
+
+    calculateMomentAtPoint(pointAt: number): number {
+        let bendingMoment = 0;
+        if (this.position <= pointAt) {
+            // 수직 반력에 의한 모멘트 계산
+            bendingMoment += this.reactionForces.verticalForce * (pointAt - this.position);
+            bendingMoment += this.reactionForces.moment as number;
+        }
+        return bendingMoment;
     }
 
     getPosition(): number {
@@ -85,6 +97,15 @@ export class PinnedSupport implements Support {
         this.position = position;
     }
 
+    calculateMomentAtPoint(pointAt: number): number {
+        let bendingMoment = 0;
+        if (this.position <= pointAt) {
+            // 수직 반력에 의한 모멘트 계산
+            bendingMoment += this.reactionForces.verticalForce * (pointAt - this.position);
+        }
+        return bendingMoment;
+    }
+
     getPosition(): number {
         return this.position;
     }
@@ -117,6 +138,15 @@ export class RollerSupport implements Support {
 
     constructor(position: number) {
         this.position = position;
+    }
+
+    calculateMomentAtPoint(pointAt: number): number {
+        let bendingMoment = 0;
+        if (this.position <= pointAt) {
+            // 수직 반력에 의한 모멘트 계산
+            bendingMoment += this.reactionForces.verticalForce * (pointAt - this.position);
+        }
+        return bendingMoment;
     }
 
     getPosition(): number {

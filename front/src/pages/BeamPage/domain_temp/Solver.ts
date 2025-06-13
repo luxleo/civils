@@ -1,6 +1,7 @@
-import type {Beam, StaticallyDeterminedBeam} from "./Beam.ts";
+import {BeamInterface, type BeamInterface, StaticallyIndeterminateBeam} from "@/pages/BeamPage/domain_temp/Beam.ts";
 import type {Load} from "./Load.ts";
-import type {ReactionForces, Support} from "@/pages/BeamPage/domain/Support";
+import type {ReactionForces, Support} from "@/pages/BeamPage/domain_temp/Support";
+import {BeamContext} from "@/contexts";
 
 export type ShearForcePoint = {
     position: number;
@@ -33,41 +34,49 @@ export type DeflectionDiagram = {
 //
 // }
 interface Solver {
-    solve(): void;
+    solve(beam: BeamInterface): void;
 
-    /**
-     * SDB: statically determined beam
-     *
-     * SIB: statically indeterminate beam
-     */
-    getProblemType(): "SDB" | "SIB";
+    calculateReactions(): Record<number, ReactionForces>;
+
+    generateSFD(): ShearForceDiagram;
+
+    generateBMD(): BendingMomentDiagram;
+
+    generateDeflectionDiagram(): DeflectionDiagram;
 }
 
 export class BeamSolver implements Solver {
-    private readonly beam: Beam;
+    private readonly beam: BeamInterface;
     private readonly loads: Load[];
     private readonly supports: Support[];
     private readonly numPoints: number;
 
-    constructor(beam: Beam, loads: Load[], supports: Support[], numPoints?: number) {
-        this.beam = beam;
+    constructor(beamContext: BeamContext, loads: Load[], supports: Support[], numPoints?: number) {
+        this.beam = this.allocateProperBeam(beamContext, supports);
         this.loads = loads;
         this.supports = supports;
         this.numPoints = numPoints ?? 10;
-        this.solve();
+        this.solve(this.beam);
     }
 
-    public solve(): void {
-        const problemType = this.getProblemType();
-        if (problemType === 'SDB') {
+    public solve(beam: BeamInterface): void {
+        if (beam instanceof Beam) {
             this.solveSDB();
+        } else if (beam instanceof StaticallyIndeterminateBeam) {
+            this.solveSIB();
         } else {
-            throw new Error('Statically indeterminate beams are not supported yet');
-            // this.solveSIB();
+            throw new Error('Unknown beam type');
         }
     }
 
-    public getProblemType(): "SDB" | "SIB" {
+    private allocateProperBeam(beamContext: BeamContext, supports: Support[]) {
+        if (this.getProblemType(supports) === 'SDB') {
+            return new Beam(beamContext.length);
+        }
+        return new StaticallyIndeterminateBeam(beamContext.length);
+    }
+
+    private getProblemType(supports: Support[]): "SDB" | "SIB" {
         // A beam is statically determinate if the number of unknowns (reactions) equals the number of equilibrium equations
         // For a 2D beam, we have 3 equilibrium equations: sum of forces in x, sum of forces in y, and sum of moments
 
@@ -75,7 +84,7 @@ export class BeamSolver implements Solver {
         let totalConstraints = 0;
 
         // Get the supports from the beam
-        for (const support of this.supports) {
+        for (const support of supports) {
             if ('getNumberOfConstraints' in support) {
                 totalConstraints += support.getNumberOfConstraints();
             }
@@ -102,6 +111,18 @@ export class BeamSolver implements Solver {
         this.beam.calculateReactions(this.supports, this.loads);
     }
 
+    public calculateReactions() {
+        const result: Record<number, ReactionForces> = {}
+        for (const support of this.supports) {
+            result[support.getPosition()] = {
+                verticalForce: support.getVerticalForce(),
+                horizontalForce: support.getHorizontalForce?.() || 0,
+                moment: support.getMoment?.() || 0
+            }
+        }
+        return result;
+    }
+
     /**
      * 빔의 전단력 다이어그램(SFD)을 생성합니다.
      * @param numPoints 다이어그램에 사용할 포인트 수 (기본값 100)
@@ -109,7 +130,7 @@ export class BeamSolver implements Solver {
      */
     public generateSFD(): ShearForceDiagram {
         // 빔의 길이 가져오기
-        const beam = this.beam as StaticallyDeterminedBeam;
+        const beam = this.beam as BeamInterface;
         const beamLength = beam.getLength();
 
         // 포인트 간격 계산
@@ -139,7 +160,7 @@ export class BeamSolver implements Solver {
      */
     public generateBMD(): BendingMomentDiagram {
         // 빔의 길이 가져오기
-        const beam = this.beam as StaticallyDeterminedBeam;
+        const beam = this.beam as BeamInterface;
         const beamLength = beam.getLength();
 
         // 포인트 간격 계산
@@ -170,7 +191,7 @@ export class BeamSolver implements Solver {
      */
     public generateDeflectionDiagram(EI: number = 1.0): DeflectionDiagram {
         // 빔의 길이 가져오기
-        const beam = this.beam as StaticallyDeterminedBeam;
+        const beam = this.beam as BeamInterface;
         const beamLength = beam.getLength();
 
         // 포인트 간격 계산
@@ -304,17 +325,5 @@ export class BeamSolver implements Solver {
         }
 
         return {points};
-    }
-
-    public generateReactions() {
-        const result: Record<number, ReactionForces> = {}
-        for (const support of this.supports) {
-            result[support.getPosition()] = {
-                verticalForce: support.getVerticalForce(),
-                horizontalForce: support.getHorizontalForce?.() || 0,
-                moment: support.getMoment?.() || 0
-            }
-        }
-        return result;
     }
 }

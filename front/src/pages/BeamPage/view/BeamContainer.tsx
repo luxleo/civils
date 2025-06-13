@@ -5,6 +5,7 @@ import {css} from "@emotion/react";
 import Button from "@/components/common/Button/Button";
 import {useContext} from "react";
 import {BeamContext} from "@/contexts";
+import {BeamService} from "@/pages/BeamPage/service/BeamService";
 
 const BeamContainer = () => {
     return (
@@ -29,10 +30,17 @@ const MainPanel = () => {
 }
 
 const BeamSolverContainer = () => {
-    const {beam, loads, supports} = useContext(BeamContext);
+    const {beam, loads, supports, isBeamInitialized} = useContext(BeamContext);
     const handleSolve = () => {
         // TODO: API 처리할 때 로직 계산 위치를 서버/브라우져로 구분한다.
-
+        if (isBeamInitialized()) {
+            const result = BeamService.analyzeBeam(
+                beam,
+                Array.from(loads.values()),
+                Array.from(supports.values())
+            );
+            console.log(result);
+        }
     }
     return (
         <div css={S.BeamSolverContainer}>

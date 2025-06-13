@@ -1,10 +1,10 @@
-import {Beam, BeamSolver} from "../domain";
+import {BeamInterface, BeamSolver} from "src/pages/BeamPage/domain_temp";
 
 export class BeamFacade {
-    private beam: Beam;
+    private beam: BeamInterface;
     private solver: BeamSolver;
 
-    constructor(beam: Beam) {
+    constructor(beam: BeamInterface) {
         this.beam = beam;
         this.solver = new BeamSolver(beam);
     }
