@@ -29,6 +29,13 @@ export interface Support {
     getHorizontalForce?(): number;
 
     getMoment?(): number;
+
+    /**
+     * 단면법으로 전단력 계산한다.
+     * 단면의 진행 방향은 왼 -> 오 이다.
+     * @param position
+     */
+    calculateShearForceAt(position: number): number;
 }
 
 export interface ReactionForces {
@@ -37,17 +44,31 @@ export interface ReactionForces {
     moment?: number;
 }
 
-export class FixedSupport implements Support {
-    private readonly position: number;
-    private readonly constraints: Constraint[] = ['horizontalTranslation', 'verticalTranslation', 'rotation'];
-    private reactionForces: ReactionForces = {
+abstract class AbstractSupport {
+    protected readonly position: number;
+    protected reactionForces: ReactionForces = {
         horizontalForce: 0,
         verticalForce: 0,
         moment: 0
     };
 
-    constructor(position: number) {
+    protected constructor(position: number) {
         this.position = position;
+    }
+
+    calculateShearForceAt(position: number): number {
+        if (position < this.position) {
+            return this.reactionForces.verticalForce;
+        }
+        return 0;
+    }
+}
+
+export class FixedSupport extends AbstractSupport implements Support {
+    private readonly constraints: Constraint[] = ['horizontalTranslation', 'verticalTranslation', 'rotation'];
+
+    constructor(position: number) {
+        super(position);
     }
 
     calculateMomentAtPoint(pointAt: number): number {
@@ -85,16 +106,15 @@ export class FixedSupport implements Support {
     }
 }
 
-export class PinnedSupport implements Support {
-    private readonly position: number;
+export class PinnedSupport extends AbstractSupport implements Support {
     private readonly constraints: Constraint[] = ['horizontalTranslation', 'verticalTranslation'];
-    private reactionForces: ReactionForces = {
-        horizontalForce: 0,
-        verticalForce: 0,
-    };
 
     constructor(position: number) {
-        this.position = position;
+        super(position);
+    }
+
+    getMoment?(): number {
+        throw new Error("Method not implemented.");
     }
 
     calculateMomentAtPoint(pointAt: number): number {
@@ -129,15 +149,11 @@ export class PinnedSupport implements Support {
     }
 }
 
-export class RollerSupport implements Support {
-    private readonly position: number;
+export class RollerSupport extends AbstractSupport implements Support {
     private readonly constraints: Constraint[] = ['horizontalTranslation'];
-    private reactionForces: ReactionForces = {
-        verticalForce: 0,
-    };
 
     constructor(position: number) {
-        this.position = position;
+        super(position);
     }
 
     calculateMomentAtPoint(pointAt: number): number {

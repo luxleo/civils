@@ -3,7 +3,7 @@ import {
     DistributedLoadImpl, FixedSupport,
     type Load,
     PinnedSupport,
-    PointLoadImpl,
+    PointLoad,
     type ReactionForces, RollerSupport,
     type Support
 } from "@/pages/BeamPage/domain_temp";
@@ -13,7 +13,7 @@ import {BeamContext, type LoadContext, type SupportContext} from "@/contexts";
 type BeamAnalyzeResponse = {
     /**
      * 보의 지지대의 모든 반력들을 반환한다.
-     * Map<number, ReactionForces> 에서의 number는 position 이다.
+     * Record<number, ReactionForces> 에서의 number는 position 이다.
      */
     reactions: Record<number, ReactionForces>
     sfd: ShearForceDiagram;
@@ -43,7 +43,7 @@ export class BeamService {
             const {type} = loadContext;
             switch (type) {
                 case "pointLoad":
-                    loads.push(new PointLoadImpl(loadContext.magnitude, loadContext.position));
+                    loads.push(new PointLoad(loadContext.magnitude, loadContext.position));
                     break;
                 case "distributedLoad": {
                     const {startMagnitude, endMagnitude, startPosition, endPosition} = loadContext;

@@ -20,7 +20,7 @@ export {
     type DistributedLoadInfo,
     type Load,
     type AngledPointLoad,
-    PointLoadImpl,
+    PointLoad,
     AngledPointLoadImpl,
     DistributedLoadImpl
 } from './Load';

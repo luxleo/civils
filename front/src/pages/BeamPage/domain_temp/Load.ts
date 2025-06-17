@@ -13,75 +13,100 @@ export type DistributedLoadInfo = {
 }
 
 export interface Load {
-    calculateShearForce: () => number;
-    getEquivalentMomentAt: (position: number) => number;
-    getPosition?: () => number;
+    calculateShearForce(): number;
+
+    getMomentAt(position: number): number;
+
+    getShearForceAt(position: number): number;
 }
 
 export interface AngledPointLoad extends Load {
-    getHorizontalForce: () => number;
+    calculateHorizontalForce(): number;
 }
 
 export interface DistributedLoad extends Load {
     getEquivalentForce: () => number;
 }
 
-export class PointLoadImpl implements Load {
+abstract class AbstractLoad implements Load {
+    protected abstract isApplicableAt(position: number): boolean;
+}
+
+//TODO: abstract class
+export class PointLoad extends AbstractLoad implements Load {
     private readonly magnitude: number;
     private readonly position: number;
     private readonly direction: LoadDirection;
 
     constructor(magnitude: number, position: number, direction: LoadDirection) {
+        super();
         this.magnitude = magnitude;
         this.position = position;
         this.direction = direction;
     }
 
+    protected isApplicableAt(position: number): boolean {
+        return position <= this.position;
+    }
+
+    getShearForceAt(position: number): number {
+        if (this.isApplicableAt(position)) {
+            return this.calculateShearForce();
+        }
+        return 0;
+    }
+
+    getMomentAt(position: number): number {
+        if (this.isApplicableAt(position)) {
+            return this.calculateShearForce() * (this.position - position);
+        }
+        return 0;
+    }
+
     public calculateShearForce() {
         if (this.direction === 'upward') {
             return this.magnitude;
-        } else {
-            return -this.magnitude;
         }
-    }
-
-    public getEquivalentForce() {
-        return this.magnitude;
-    }
-
-    public getEquivalentMomentAt(position: number): number {
-        return this.magnitude * (this.position - position);
-    }
-
-    public getPosition(): number {
-        return this.position;
-    }
-
-    public getMagnitude(): number {
-        return this.magnitude;
+        return -this.magnitude;
     }
 }
 
-export class AngledPointLoadImpl implements AngledPointLoad {
+//TODO: direction 을 정하지 않고 각도로 위 아래 계산하기.
+export class AngledPointLoadImpl extends AbstractLoad implements AngledPointLoad {
     private readonly magnitude: number;
     private readonly position: number;
     private readonly angle: number;
 
     constructor(magnitude: number, position: number, angle: number) {
+        super();
         this.magnitude = magnitude;
         this.position = position;
         this.angle = angle;
     }
 
-    public getEquivalentForce() {
+    protected isApplicableAt(position: number): boolean {
+        return position <= this.position;
+    }
+
+    public calculateShearForce() {
         return this.magnitude * Math.sin(this.angle);
     }
 
-    public getEquivalentMomentAt(position: number): number {
-        return this.magnitude * Math.sin(this.angle) * (this.position - position);
+    getMomentAt(position: number): number {
+        if (this.isApplicableAt(position)) {
+            return this.magnitude * Math.sin(this.angle) * (this.position - position);
+        }
+        return 0;
     }
 
-    public getHorizontalForce(): number {
+    getShearForceAt(position: number): number {
+        if (this.isApplicableAt(position)) {
+            return this.calculateShearForce();
+        }
+        return 0;
+    }
+
+    public calculateHorizontalForce(): number {
         return this.magnitude * Math.cos(this.angle);
     }
 }
@@ -89,49 +114,69 @@ export class AngledPointLoadImpl implements AngledPointLoad {
 /**
  * @constructing
  */
-export class DistributedLoadImpl implements DistributedLoadImpl {
-    private startPosition: number = 0;
-    private endPosition: number = 0;
-    private startMagnitude: number = 0;
-    private endMagnitude: number = 0;
+export class DistributedLoadImpl implements DistributedLoad {
+    private readonly startPosition: number = 0;
+    private readonly endPosition: number = 0;
+    private readonly startMagnitude: number = 0;
+    private readonly endMagnitude: number = 0;
+    private readonly direction: LoadDirection;
 
-    private constructor() {
+    private constructor(startPosition: number, endPosition: number, startMagnitude: number, endMagnitude: number, direction: LoadDirection) {
+        this.startPosition = startPosition;
+        this.endPosition = endPosition;
+        this.startMagnitude = startMagnitude;
+        this.endMagnitude = endMagnitude;
+        this.direction = direction;
     }
 
-    public static createUniform(magnitude: number, startPosition: number, endPosition: number): DistributedLoadImpl {
-        return this.create(magnitude, magnitude, startPosition, endPosition);
+    getEquivalentForce: () => number;
+
+    public static createUniform(magnitude: number, startPosition: number, endPosition: number, direction: LoadDirection): DistributedLoadImpl {
+        return this.create(magnitude, magnitude, startPosition, endPosition, direction);
     }
 
-    public static create(startMagnitude: number, endMagnitude: number, startPosition: number, endPosition: number): DistributedLoadImpl {
-        const result = new DistributedLoadImpl();
-        result.startMagnitude = startMagnitude;
-        result.endMagnitude = endMagnitude;
-        result.startPosition = startPosition;
-        result.endPosition = endPosition;
-        return result;
+    public static create(startMagnitude: number, endMagnitude: number, startPosition: number, endPosition: number, direction: LoadDirection): DistributedLoadImpl {
+        return new DistributedLoadImpl(startPosition, endPosition, startMagnitude, endMagnitude, direction);
     }
 
-    public getStartPosition(): number {
-        return this.startPosition;
-    }
-
-    public getEndPosition(): number {
-        return this.endPosition;
-    }
-
-    public getStartMagnitude(): number {
-        return this.startMagnitude;
-    }
-
-    public getEndMagnitude(): number {
-        return this.endMagnitude;
-    }
-
-    public getEquivalentForce() {
-        // For a trapezoidal load, the total force is the average magnitude times the length
+    public calculateShearForce(): number {
         const averageMagnitude = (this.startMagnitude + this.endMagnitude) / 2;
         const length = this.endPosition - this.startPosition;
-        return averageMagnitude * length;
+        const magnitude = averageMagnitude * length;
+        if (this.direction === 'upward') {
+            return magnitude;
+        }
+        return -magnitude;
+    }
+
+    getShearForceAt(position: number): number {
+        // 위치가 분포하중 구간 내에 있는 경우
+        if (position >= this.startPosition && position <= this.endPosition) {
+            // 해당 구간의 다항식을 사용하여 전단력 계산
+            // 선형 다항식: w(x) = w1 + (w2-w1)*(x-x1)/(x2-x1)
+
+            // x 위치에서의 분포하중 크기
+            const wx =
+                this.startMagnitude +
+                (this.endMagnitude - this.startMagnitude) * (position - this.startPosition)
+                / (this.endPosition - this.startPosition);
+
+            // 분포하중 구간 시작부터 x 위치까지의 총 하중 계산 (다항식의 적분)
+            // 적분: ∫[w1 + (w2-w1)*(t-x1)/(x2-x1)] dt, from t=x1 to t=x
+            const partialLength = position - this.startPosition;
+            const averageLoad = (this.startMagnitude + wx) / 2;
+            return averageLoad * partialLength;
+        }
+        // 위치가 분포하중 구간 오른쪽에 있는 경우
+        else if (position > this.endPosition) {
+            // 전체 분포하중의 영향을 고려
+            return this.calculateShearForce();
+        }
+        return 0;
+    }
+
+    getMomentAt(position: number): number {
+        throw new Error("Method not implemented.");
     }
 
     public getEquivalentMomentAt(positionedAt: number): number {
@@ -139,7 +184,7 @@ export class DistributedLoadImpl implements DistributedLoadImpl {
         // The equivalent force acts at the centroid of the distributed load
 
         // Calculate the total force
-        const totalForce = this.getEquivalentForce();
+        const totalForce = this.calculateShearForce();
 
         // Calculate the position of the centroid (center of gravity)
         let centroidPosition;

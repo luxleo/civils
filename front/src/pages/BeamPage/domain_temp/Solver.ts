@@ -1,4 +1,8 @@
-import {BeamInterface, type BeamInterface, StaticallyIndeterminateBeam} from "@/pages/BeamPage/domain_temp/Beam.ts";
+import {
+    Beam,
+    type BeamInterface,
+    StaticallyIndeterminateBeam
+} from "@/pages/BeamPage/domain_temp/Beam.ts";
 import type {Load} from "./Load.ts";
 import type {ReactionForces, Support} from "@/pages/BeamPage/domain_temp/Support";
 import {BeamContext} from "@/contexts";
