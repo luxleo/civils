@@ -1,6 +1,5 @@
 // Export all the necessary types and classes from the domain directory
 // Export from Beam.ts
-export {BeamInterface} from '@/pages/BeamPage/domain_temp/Beam';
 export type {BeamInterface} from '@/pages/BeamPage/domain_temp/Beam';
 
 // Export from Support.ts

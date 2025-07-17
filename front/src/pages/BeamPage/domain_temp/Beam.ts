@@ -33,57 +33,10 @@ export class Beam implements BeamInterface {
      */
     generateBendingMomentAtPoint(position: number, supports: Support[], loads: Load[]): number {
         let bendingMoment = 0;
-
         // 지지대 반력에 의한 모멘트 고려
-        for (const support of supports) {
-            // 지지대가 계산 지점보다 왼쪽에 있을 경우 (단면법에 따라)
-            bendingMoment += support.calculateMomentAtPoint(position);
-        }
-
+        bendingMoment += supports.reduce((acc, support) => acc + support.calculateMomentAtPoint(position), 0);
         // 모든 하중에 의한 모멘트 고려
-        for (const load of loads) {
-            // 집중하중 처리
-            bendingMoment += load.getMomentAt(position);
-            // TODO: load 의 인터페이스로 getEquivalentMomentAt 함수 정의 하여 다형성 지킬 것.
-            // if (load instanceof PointLoad) {
-            //     // 하중이 계산 지점보다 왼쪽에 있을 경우에만 고려
-            //     if (load.isApplicableAt(position)) {
-            //         bendingMoment += load.getEquivalentMomentAt(position);
-            //     }
-            // }
-            // // 분포하중 처리
-            // else if (load instanceof DistributedLoadImpl) {
-            //     const x1 = load.getStartPosition();
-            //     const x2 = load.getEndPosition();
-            //     const w1 = load.getStartMagnitude();
-            //     const w2 = load.getEndMagnitude();
-            //
-            //     // 위치가 분포하중 구간 내에 있는 경우
-            //     if (position >= x1 && position <= x2) {
-            //         // 분포하중 구간 시작부터 x 위치까지의 모멘트 계산
-            //         const partialLength = position - x1;
-            //         const wx = w1 + (w2 - w1) * (partialLength) / (x2 - x1);
-            //
-            //         // 부분 구간의 평균 하중 계산
-            //         const averageLoad = (w1 + wx) / 2;
-            //         const partialForce = averageLoad * partialLength;
-            //
-            //         // 부분 구간의 중심점 계산
-            //         const centroidX = x1 + partialLength / 3 * (2 * w1 + wx) / (w1 + wx);
-            //
-            //         // 부분 분포하중에 의한 모멘트 계산
-            //         bendingMoment -= partialForce * (position - centroidX);
-            //     }
-            //     // 위치가 분포하중 구간 오른쪽에 있는 경우
-            //     else if (position > x2) {
-            //         // 전체 분포하중의 영향을 고려
-            //         // 분포하중의 합력은 중심점에 작용
-            //         bendingMoment -= load.getEquivalentMomentAt(position);
-            //     }
-            //     // 위치가 분포하중 구간 왼쪽에 있는 경우, 영향 없음
-            // }
-        }
-
+        bendingMoment += loads.reduce((acc, load) => acc + load.getMomentAt(position), 0);
         return bendingMoment;
     }
 
@@ -97,29 +50,24 @@ export class Beam implements BeamInterface {
      */
     generateShearForceAtPoint(position: number, supports: Support[], loads: Load[]): number {
         let shearForce = 0;
-
-        // 지지대 반력 고려
-        for (const support of supports) {
-            // 지지대가 계산 지점보다 왼쪽에 있을 경우 (단면법에 따라)
-            shearForce += support.calculateShearForceAt(position);
-        }
-
-        // 모든 하중 고려 (집중하중 및 분포하중)
-        for (const load of loads) {
-            shearForce += load.getShearForceAt(position);
-        }
-
+        shearForce += supports.reduce((acc, support) => acc + support.calculateShearForceAt(position), 0);
+        shearForce += loads.reduce((acc, load) => acc + load.getShearForceAt(position), 0);
         return shearForce;
     }
 
     private determineBeamType(supports: Support[]): 'CantileverBeam' | 'SimpleBeam' {
-        if (supports.length === 1 && supports[0].getNumberOfConstraints() === 3) {
+        if (this.isStaticallyDeterminedCantileverBeam(supports)) {
             return 'CantileverBeam';
-        } else if (supports.length === 2 && supports.reduce((acc, s) => acc + s.getNumberOfConstraints(), 0) === 3) {
+        } else if (supports.length === 2 && supports.reduce((acc, support) => acc + support.getNumberOfConstraints(), 0) === 3) {
             return 'SimpleBeam';
         } else {
             throw new Error('Beam type not supported or is statically indeterminate.');
         }
+    }
+
+    //TODO: 정정구조물 판단 로직을 다음과 같이 수정: 고정단 둘 미만, 수평력 없을 시 지점수는 관계없음.
+    private isStaticallyDeterminedCantileverBeam(supports: Support[]): boolean {
+        return supports.length === 1 && supports[0].getNumberOfConstraints() === 3;
     }
 
     /**
@@ -159,7 +107,7 @@ export class Beam implements BeamInterface {
                 if (i !== h) {
                     const factor = m[i][k];
                     for (let j = k; j < cols; j++) {
-                        m[i][j] -= factor * m[h][j];
+                        m[i][j] -= factor * m[h][j]; // eliminate all first colum that is not pivot row.
                     }
                 }
             }

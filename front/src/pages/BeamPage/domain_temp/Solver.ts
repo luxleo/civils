@@ -5,7 +5,17 @@ import {
 } from "@/pages/BeamPage/domain_temp/Beam.ts";
 import type {Load} from "./Load.ts";
 import type {ReactionForces, Support} from "@/pages/BeamPage/domain_temp/Support";
-import {BeamContext} from "@/contexts";
+import type {BeamContextProps} from "@/contexts";
+
+export type BeamAnalyzeResponse = {
+    /**
+     * 보의 지지대의 모든 반력들을 반환한다.
+     * Record<number, ReactionForces> 에서의 number는 position 이다.
+     */
+    reactions: Record<number, ReactionForces>
+    sfd: ShearForceDiagram;
+    bmd: BendingMomentDiagram;
+}
 
 export type ShearForcePoint = {
     position: number;
@@ -55,7 +65,7 @@ export class BeamSolver implements Solver {
     private readonly supports: Support[];
     private readonly numPoints: number;
 
-    constructor(beamContext: BeamContext, loads: Load[], supports: Support[], numPoints?: number) {
+    constructor(beamContext: BeamContextProps, loads: Load[], supports: Support[], numPoints?: number) {
         this.beam = this.allocateProperBeam(beamContext, supports);
         this.loads = loads;
         this.supports = supports;
@@ -73,11 +83,19 @@ export class BeamSolver implements Solver {
         }
     }
 
-    private allocateProperBeam(beamContext: BeamContext, supports: Support[]) {
-        if (this.getProblemType(supports) === 'SDB') {
-            return new Beam(beamContext.length);
+    public analyzeBeam(): BeamAnalyzeResponse {
+        return {
+            reactions: this.calculateReactions(),
+            sfd: this.generateSFD(),
+            bmd: this.generateBMD(),
         }
-        return new StaticallyIndeterminateBeam(beamContext.length);
+    }
+
+    private allocateProperBeam(beamContext: BeamContextProps, supports: Support[]) {
+        if (this.getProblemType(supports) === 'SDB') {
+            return new Beam(beamContext.beamLength);
+        }
+        return new StaticallyIndeterminateBeam(beamContext.beamLength);
     }
 
     private getProblemType(supports: Support[]): "SDB" | "SIB" {
@@ -129,7 +147,7 @@ export class BeamSolver implements Solver {
 
     /**
      * 빔의 전단력 다이어그램(SFD)을 생성합니다.
-     * @param numPoints 다이어그램에 사용할 포인트 수 (기본값 100)
+     * 하중 및 지지점 위치에서의 불연속점을 자동으로 탐지하여 계산합니다.
      * @returns 전단력 다이어그램 데이터
      */
     public generateSFD(): ShearForceDiagram {
@@ -137,15 +155,41 @@ export class BeamSolver implements Solver {
         const beam = this.beam as BeamInterface;
         const beamLength = beam.getLength();
 
-        // 포인트 간격 계산
-        const step = beamLength / (this.numPoints - 1);
+        // 관심 지점 자동 탐지 (하중, 지지점, 보의 시작과 끝)
+        const pointsOfInterest = this.getPointsOfInterest(beamLength);
+
+        // 일반 간격 계산 (관심 지점 사이의 추가 포인트)
+        const regularPoints = this.generateRegularPoints(pointsOfInterest, beamLength);
+
+        // 모든 계산 지점 (관심 지점 + 일반 간격 포인트)
+        const allCalculationPoints = [...pointsOfInterest, ...regularPoints].sort((a, b) => a - b);
 
         // 결과 포인트 배열 초기화
         const points: ShearForcePoint[] = [];
 
         // 각 포인트에 대한 전단력 계산
-        for (let i = 0; i < this.numPoints; i++) {
-            const position = i * step;
+        for (const position of allCalculationPoints) {
+            // 관심 지점인 경우 (하중이나 지지점 위치)
+            if (pointsOfInterest.includes(position) && position > 0 && position < beamLength) {
+                // 직전 값 계산 (epsilon만큼 이전 위치)
+                const epsilon = 1e-10; // 아주 작은 값
+                const beforePosition = position - epsilon;
+                const beforeShearForce = beam.generateShearForceAtPoint(beforePosition, this.supports, this.loads);
+
+                points.push({
+                    position: position,
+                    shearForce: beforeShearForce
+                });
+
+                // 직후 값 계산
+                const afterShearForce = beam.generateShearForceAtPoint(position, this.supports, this.loads);
+
+                points.push({
+                    position: position,
+                    shearForce: afterShearForce
+                });
+                continue;
+            }
             const shearForce = beam.generateShearForceAtPoint(position, this.supports, this.loads);
 
             points.push({
@@ -159,7 +203,7 @@ export class BeamSolver implements Solver {
 
     /**
      * 빔의 휨모멘트 다이어그램(BMD)을 생성합니다.
-     * @param numPoints 다이어그램에 사용할 포인트 수 (기본값 100)
+     * 하중 및 지지점 위치에서의 불연속점을 자동으로 탐지하여 계산합니다.
      * @returns 휨모멘트 다이어그램 데이터
      */
     public generateBMD(): BendingMomentDiagram {
@@ -167,15 +211,41 @@ export class BeamSolver implements Solver {
         const beam = this.beam as BeamInterface;
         const beamLength = beam.getLength();
 
-        // 포인트 간격 계산
-        const step = beamLength / (this.numPoints - 1);
+        // 관심 지점 자동 탐지 (하중, 지지점, 보의 시작과 끝)
+        const pointsOfInterest = this.getPointsOfInterest(beamLength);
+
+        // 일반 간격 계산 (관심 지점 사이의 추가 포인트)
+        const regularPoints = this.generateRegularPoints(pointsOfInterest, beamLength);
+
+        // 모든 계산 지점 (관심 지점 + 일반 간격 포인트)
+        const allCalculationPoints = [...pointsOfInterest, ...regularPoints].sort((a, b) => a - b);
 
         // 결과 포인트 배열 초기화
         const points: BendingMomentPoint[] = [];
 
         // 각 포인트에 대한 휨모멘트 계산
-        for (let i = 0; i < this.numPoints; i++) {
-            const position = i * step;
+        for (const position of allCalculationPoints) {
+            // 관심 지점인 경우 (하중이나 지지점 위치)
+            if (pointsOfInterest.includes(position) && position > 0 && position < beamLength) {
+                // 직전 값 계산 (epsilon만큼 이전 위치)
+                const epsilon = 1e-10; // 아주 작은 값
+                const beforePosition = position - epsilon;
+                const beforeBendingMoment = beam.generateBendingMomentAtPoint(beforePosition, this.supports, this.loads);
+
+                points.push({
+                    position: position,
+                    bendingMoment: beforeBendingMoment
+                });
+
+                // 직후 값 계산
+                const afterBendingMoment = beam.generateBendingMomentAtPoint(position, this.supports, this.loads);
+
+                points.push({
+                    position: position,
+                    bendingMoment: afterBendingMoment
+                });
+                continue;
+            }
             const bendingMoment = beam.generateBendingMomentAtPoint(position, this.supports, this.loads);
 
             points.push({
@@ -188,8 +258,57 @@ export class BeamSolver implements Solver {
     }
 
     /**
+     * 빔의 중요 지지점의 위치를 자동으로 탐지합니다.
+     * @param beamLength 빔의 길이
+     * @returns 중요 지점들의 위치 배열
+     * @private
+     */
+    private getPointsOfInterest(beamLength: number): number[] {
+        const points = new Set<number>();
+
+        // 빔의 시작점과 끝점 추가
+        points.add(0);
+        points.add(beamLength);
+
+        // 모든 지지점 위치 추가
+        for (const support of this.supports) {
+            points.add(support.getPosition());
+        }
+
+        return Array.from(points).sort((a, b) => a - b);
+    }
+
+    /**
+     * 중요 지점들 사이에 추가적인 일반 간격 포인트를 생성합니다.
+     * @param pointsOfInterest 중요 지점들의 위치 배열
+     * @param beamLength 빔의 길이
+     * @returns 일반 간격 포인트들의 위치 배열
+     * @private
+     */
+    private generateRegularPoints(pointsOfInterest: number[], beamLength: number): number[] {
+        const regularPoints: number[] = [];
+
+        // 각 중요 지점 사이에 일정 간격으로 포인트 추가
+        for (let i = 0; i < pointsOfInterest.length - 1; i++) {
+            const start = pointsOfInterest[i];
+            const end = pointsOfInterest[i + 1];
+            const segmentLength = end - start;
+
+            // 세그먼트 길이에 따라 포인트 수 결정 (최소 2개)
+            const numPointsInSegment = Math.max(2, Math.ceil(segmentLength / beamLength * this.numPoints));
+
+            // 시작점과 끝점 사이에 포인트 추가
+            for (let j = 1; j < numPointsInSegment - 1; j++) {
+                const position = start + (segmentLength * j) / (numPointsInSegment - 1);
+                regularPoints.push(position);
+            }
+        }
+
+        return regularPoints;
+    }
+
+    /**
      * 빔의 처짐 다이어그램(Deflection Diagram)을 생성합니다.
-     * @param numPoints 다이어그램에 사용할 포인트 수 (기본값 100)
      * @param EI 빔의 강성(Flexural Rigidity, E×I) - 영률(E)과 단면 2차 모멘트(I)의 곱 (기본값 1.0)
      * @returns 처짐 다이어그램 데이터
      */

@@ -25,10 +25,10 @@ export interface AngledPointLoad extends Load {
 }
 
 export interface DistributedLoad extends Load {
-    getEquivalentForce: () => number;
+    getEquivalentPointLoad(): PointLoad;
 }
 
-abstract class AbstractLoad implements Load {
+abstract class AbstractLoad {
     protected abstract isApplicableAt(position: number): boolean;
 }
 
@@ -129,7 +129,15 @@ export class DistributedLoadImpl implements DistributedLoad {
         this.direction = direction;
     }
 
-    getEquivalentForce: () => number;
+    public getEquivalentPointLoad(): PointLoad {
+        const magnitude = this.calculateShearForce();
+        const centroidPosition = this.startPosition +
+            (this.endPosition - this.startPosition) *
+            (2 * this.startMagnitude + this.endMagnitude) /
+            (3 * (this.startMagnitude + this.endMagnitude));
+
+        return new PointLoad(Math.abs(magnitude), centroidPosition, this.direction);
+    }
 
     public static createUniform(magnitude: number, startPosition: number, endPosition: number, direction: LoadDirection): DistributedLoadImpl {
         return this.create(magnitude, magnitude, startPosition, endPosition, direction);

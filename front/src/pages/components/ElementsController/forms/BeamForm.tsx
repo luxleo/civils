@@ -4,10 +4,10 @@ import {css} from "@emotion/react";
 import {z} from "zod";
 import {type SubmitHandler, useForm} from "react-hook-form";
 import Button from "@/components/common/Button/Button";
-import {Input} from "@/components/common/Input/Input";
+import {Input} from "@/components/common/Input";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
-import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
+import type {ChangeModeProps} from "../ElementsController";
+import {formContainer} from "@/pages/components/ElementsController/forms/common.style.";
 
 const FormSchema = z.object({
     length: z.number().gte(0, {message: "길이는 양수이어야합니다."})

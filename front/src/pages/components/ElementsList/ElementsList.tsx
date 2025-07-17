@@ -1,10 +1,9 @@
 import styled from "@emotion/styled";
-import {useContext} from "react";
-import {BeamContext, type LoadContext, type PointLoadContext} from "@/contexts";
-import {SupportsListView} from "@/pages/BeamPage/view/ElementsList/supports/SupportsListView";
+import {type LoadContext, type PointLoadContext, useBeamContext} from "@/contexts";
+import {SupportsListView} from "@/pages/components/ElementsList/supports/SupportsListView";
 
 const ElementsList = () => {
-    const {beam, supports, isBeamInitialized, removeSupport, updateSupport, loads} = useContext(BeamContext);
+    const {supports, isBeamInitialized, beamLength, removeSupport, updateSupport, loads} = useBeamContext();
     console.log("ElementsList " + supports.size);
     if (isBeamInitialized()) {
         console.log("ElementsList inner " + supports.size);
@@ -12,7 +11,7 @@ const ElementsList = () => {
             <S.Container>
                 <h1>Element Lists</h1>
                 <div>
-                    {beam.length}
+                    {beamLength}
                 </div>
                 <SupportsListView
                     supports={supports}

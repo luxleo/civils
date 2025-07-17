@@ -1,11 +1,11 @@
 import styled from "@emotion/styled";
-import ElementsController from "@/pages/BeamPage/view/ElementsController/ElementsController";
 import ElementsList from "./ElementsList/ElementsList";
 import {css} from "@emotion/react";
 import Button from "@/components/common/Button/Button";
 import {useContext} from "react";
 import {BeamContext} from "@/contexts";
 import {BeamService} from "@/pages/BeamPage/service/BeamService";
+import ElementsController from "@/pages/components/ElementsController/ElementsController";
 
 const BeamContainer = () => {
     return (

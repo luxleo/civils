@@ -1,9 +1,9 @@
 import styled from "@emotion/styled";
 import {useState} from "react";
-import BeamForm from "@/pages/BeamPage/view/ElementsController/forms/BeamForm";
 import SupportForm from "./forms/SupportForm";
 import LoadsForm from "./forms/LoadsForm";
-import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
+import BeamForm from "./forms/BeamForm";
+import {formContainer} from "@/pages/components/ElementsController/forms/common.style.";
 
 type ModeModel = "beam" | "support"; // TODO: add section -> type 옮기기
 type ModeLoad = "loads";

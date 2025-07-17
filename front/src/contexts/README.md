@@ -6,7 +6,8 @@ This directory contains the React context and hooks for managing beam data in th
 
 ### BeamProvider
 
-The `BeamProvider` component provides the beam context to its children. It manages the state of the beam, supports, and loads.
+The `BeamProvider` component provides the beam context to its children. It manages the state of the beam, supports, and
+loads.
 
 ```tsx
 import { BeamProvider } from '@/contexts';
@@ -126,4 +127,5 @@ type AngledLoadContext = {
 
 ## Example Usage
 
-See the `BeamContextExample.tsx` component in the `components/BeamPage/examples` directory for a complete example of how to use the beam context.
+See the `BeamContextExample.tsx` component in the `components/Index/examples` directory for a complete example of how to
+use the beam context.

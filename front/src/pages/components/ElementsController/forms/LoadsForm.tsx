@@ -1,15 +1,16 @@
 import {useContext, useState} from "react";
 import type {LoadsType} from "@/types/domain/Beam";
 import Button from "@/components/common/Button/Button";
-import {BeamContext, type PointLoadContext} from "@/contexts";
+import {BeamContext} from "@/contexts";
 import {z} from "zod";
 import {css} from "@emotion/react";
-import {Input} from "@/components/common/Input/Input";
+import {Input} from "@/components/common/Input";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import type {LoadDirection} from "@/contexts/BeamProvider";
-import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
-import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
+import {type Load, PointLoad} from "@/pages/BeamPage/domain_temp";
+import type {ChangeModeProps} from "@/pages/components/ElementsController/ElementsController";
+import {formContainer} from "@/pages/components/ElementsController/forms/common.style.";
 
 
 const LoadsForm = (props: ChangeModeProps) => {
@@ -84,8 +85,11 @@ const PointLoadForm = () => {
             type: "pointLoad",
             position: data.position,
             magnitude: data.magnitude,
-            direction: data.direction
-        } as PointLoadContext);
+            direction: data.direction,
+            toLoad: function (): Load {
+                return new PointLoad(this.magnitude, this.position, this.direction);
+            }
+        });
     }
 
     return (

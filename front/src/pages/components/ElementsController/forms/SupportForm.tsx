@@ -4,10 +4,10 @@ import {BeamContext} from "@/contexts";
 import {z} from "zod";
 import {useForm, type SubmitHandler} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {Input} from "@/components/common/Input/Input";
+import {Input} from "@/components/common/Input";
 import type {SupportsType} from "@/types/domain/Beam";
-import type {ChangeModeProps} from "@/pages/BeamPage/view/ElementsController/ElementsController";
-import {formContainer} from "@/pages/BeamPage/view/ElementsController/forms/common.style.";
+import {ChangeModeProps} from "@/pages/components/ElementsController/ElementsController";
+import {formContainer} from "@/pages/components/ElementsController/forms/common.style.";
 
 type SupportOption = {
     name: string;
@@ -59,7 +59,10 @@ const SupportForm = (props: ChangeModeProps) => {
                 return;
             }
         }
-        addSupport({position: data.position, type: supportType})
+        addSupport({
+            position: data.position,
+            type: supportType,
+        })
     }
     console.log("SupportForm rendered");
     return (

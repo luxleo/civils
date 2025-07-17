@@ -1,20 +1,21 @@
-import {createContext} from "react";
-import {type ReactNode, useState, useCallback} from "react";
+import {createContext, useMemo, useState} from "react";
+import {type ReactNode, useCallback} from "react";
 import type {SupportsType} from "@/types/domain/Beam";
-
-export type BeamContext = {
-    length: number;
-    changeLength: (length: number) => void;
-}
+import type {Load, Support} from "@/pages/BeamPage/domain_temp";
 
 export type SupportContext = {
     type: SupportsType;
     position: number;
+    toSupport(): Support;
 }
 
 // Change LoadId to be an object type
 
 export type LoadDirection = 'upward' | 'downward';
+
+interface ContextToLoad {
+    toLoad(): Load;
+}
 
 export type PointLoadContext = {
     type: 'pointLoad';
@@ -40,12 +41,13 @@ export type AngledLoadContext = {
     direction: LoadDirection;
 }
 
-export type LoadContext = PointLoadContext | DistributedLoadContext | AngledLoadContext;
+export type LoadContext = (PointLoadContext | DistributedLoadContext | AngledLoadContext) & ContextToLoad;
 
 //INFO: support의 경우 position 이 중첩될 수 없기 때문에 별도의 supportId 가 필요하지 않다.
 // Load 의 경우 같은 position에도 중첩될 수 있으므로 LoadId를 통하여 구분한다.
 export interface BeamContextProps {
-    beam: BeamContext;
+    beamLength: number,
+    changeBeamLength: (length: number) => void;
     supports: Map<number, SupportContext>;
     loads: Map<number, LoadContext>;
     addSupport: (support: SupportContext) => void;
@@ -61,28 +63,31 @@ export interface BeamContextProps {
 
 export const BeamContext = createContext({} as BeamContextProps);
 
-
 interface BeamProviderProps {
     children: ReactNode;
 }
 
 export const BeamProvider = ({children}: BeamProviderProps) => {
-    const [beam, setBeam] = useState<BeamContext>({
-        length: 0,
-        changeLength: (length) => setBeam(prev => ({...prev, length}))
-    });
+    const [beamLength, setBeamLength] = useState(0);
     const [supports, setSupports] = useState<Map<number, SupportContext>>(new Map());
     const [loads, setLoads] = useState<Map<number, LoadContext>>(new Map());
     const [loadId, setLoadId] = useState<number>(0);
 
+    // OPTIMIZED: Removed unnecessary setBeamLength dependency (setState functions are stable)
+    const changeBeamLength = useCallback((length: number) => {
+        setBeamLength(length);
+    }, []);
+
+    // OPTIMIZED: Removed unnecessary setSupports dependency
     const addSupport = useCallback((support: SupportContext) => {
         setSupports(prev => {
             const newSupports = new Map(prev);
             newSupports.set(support.position, support);
             return newSupports;
         });
-    }, [setSupports]);
+    }, []);
 
+    // OPTIMIZED: Removed setLoads and setLoadId dependencies, kept loadId as it's actually used
     const addLoad = useCallback((load: LoadContext) => {
         setLoads(prev => {
             const newLoads = new Map(prev);
@@ -90,24 +95,27 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             return newLoads;
         });
         setLoadId(prev => prev + 1);
-    }, [loadId, setLoads, setLoadId]);
+    }, [loadId]);
 
+    // OPTIMIZED: Removed unnecessary setSupports dependency
     const removeSupport = useCallback((position: number) => {
         setSupports(prev => {
             const newSupports = new Map(prev);
             newSupports.delete(position);
             return newSupports;
         });
-    }, [setSupports]);
+    }, []);
 
+    // OPTIMIZED: Removed unnecessary setLoads dependency
     const removeLoad = useCallback((id: number) => {
         setLoads(prev => {
             const newLoads = new Map(prev);
             newLoads.delete(id);
             return newLoads;
         });
-    }, [setLoads]);
+    }, []);
 
+    // OPTIMIZED: Removed unnecessary setSupports dependency
     const updateSupport = useCallback((id: number, support: Partial<SupportContext>) => {
         setSupports(prev => {
             const newSupports = new Map(prev);
@@ -117,8 +125,9 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             }
             return newSupports;
         });
-    }, [setSupports]);
+    }, []);
 
+    // OPTIMIZED: Removed unnecessary setLoads dependency
     const updatePointLoad = useCallback((id: number, load: Partial<PointLoadContext>) => {
         setLoads(prev => {
             const newLoads = new Map(prev);
@@ -128,8 +137,9 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             }
             return newLoads;
         });
-    }, [setLoads]);
+    }, []);
 
+    // OPTIMIZED: Removed unnecessary setLoads dependency
     const updateDistributedLoad = useCallback((id: number, load: Partial<DistributedLoadContext>) => {
         setLoads(prev => {
             const newLoads = new Map(prev);
@@ -139,8 +149,9 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             }
             return newLoads;
         });
-    }, [setLoads]);
+    }, []);
 
+    // OPTIMIZED: Removed unnecessary setLoads dependency
     const updateAngledLoad = useCallback((id: number, load: Partial<AngledLoadContext>) => {
         setLoads(prev => {
             const newLoads = new Map(prev);
@@ -150,17 +161,19 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             }
             return newLoads;
         });
-    }, [setLoads]);
+    }, []);
 
+    // OPTIMIZED: This function only depends on beamLength, which is correct
     const isBeamInitialized = useCallback(() => {
-        // Using supports.size in the calculation ensures this function
-        // will re-evaluate when supports change
-        return beam.length > 0 && supports.size >= 0;
-    }, [beam.length, supports.size]);
+        return beamLength > 0;
+    }, [beamLength]);
 
-    return (
-        <BeamContext.Provider value={{
-            beam,
+    // BEST PRACTICE: useMemo for context value to prevent unnecessary re-renders
+    // All useCallback functions are included as dependencies to ensure proper memoization
+    const value = useMemo(() => {
+        return {
+            beamLength,
+            changeBeamLength,
             supports,
             loads,
             addSupport,
@@ -172,7 +185,25 @@ export const BeamProvider = ({children}: BeamProviderProps) => {
             updateDistributedLoad,
             updateAngledLoad,
             isBeamInitialized
-        }}>
+        }
+    }, [
+        beamLength,
+        changeBeamLength,
+        supports,
+        loads,
+        addSupport,
+        addLoad,
+        removeSupport,
+        removeLoad,
+        updateSupport,
+        updatePointLoad,
+        updateDistributedLoad,
+        updateAngledLoad,
+        isBeamInitialized
+    ]);
+
+    return (
+        <BeamContext.Provider value={value}>
             {children}
         </BeamContext.Provider>
     );
