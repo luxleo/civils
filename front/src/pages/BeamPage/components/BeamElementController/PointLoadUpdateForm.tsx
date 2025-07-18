@@ -13,6 +13,8 @@ import {
     type DirectionOption,
     DirectionOptionGroup
 } from "@/pages/BeamPage/components/BeamElementController/PointLoadOptionGroup";
+import {useBeamControllerContext} from "@/hooks/contexts/useBeamControllerContext";
+import {useEffect} from "react";
 
 const FormSchema = z.object({
     direction: z.enum(['UP', 'DOWN']),
@@ -27,19 +29,34 @@ const directions: DirectionOption[] = [
     {name: 'DOWN', type: 'DOWN'}
 ];
 
-export default function PointLoadCreateForm() {
+export default function PointLoadUpdateForm() {
     const {beamLength, isBeamInitialized} = useBeamElementContext();
-    const {addLoad} = useLoadElementContext();
+    const {changeMode, getTargetId} = useBeamControllerContext();
+    const {updatePointLoad, loads} = useLoadElementContext();
+
+    const targetId = getTargetId();
+    const targetPointLoad = loads.get(targetId);
+
     const {
         register,
         handleSubmit,
         formState: {errors},
         setError,
         control,
-        reset
+        reset,
+        setValue
     } = useForm<Inputs>({
-        resolver: zodResolver(FormSchema)
+        resolver: zodResolver(FormSchema),
+
     });
+
+    useEffect(() => {
+        if (targetPointLoad && targetPointLoad instanceof PointLoadDto) {
+            setValue('direction', targetPointLoad.direction);
+            setValue('magnitude', targetPointLoad.magnitude);
+            setValue('position', targetPointLoad.position);
+        }
+    }, []);
 
     const onSubmit: SubmitHandler<Inputs> = (data) => {
         if (!isBeamInitialized) {
@@ -53,14 +70,15 @@ export default function PointLoadCreateForm() {
             setError("position", {message: "position must be less than beam length", type: "manual"});
             return;
         }
-        addLoad(
+        updatePointLoad(
+            targetId,
             PointLoadDto.fromFormData({
                 magnitude: data.magnitude,
                 position: data.position,
                 direction: data.direction,
             })
         );
-        reset();
+        changeMode('LOAD');
     }
 
     return (
