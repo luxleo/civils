@@ -5,6 +5,7 @@ import FormModeSelector from "@/pages/BeamPage/components/BeamElementController/
 import PointLoadCreateForm from "@/pages/BeamPage/components/BeamElementController/PointLoadCreateForm";
 import BeamForm from "@/pages/BeamPage/components/BeamElementController/BeamForm";
 import SupportCreateForm from "@/pages/BeamPage/components/BeamElementController/SupportCreateForm";
+import PointLoadUpdateForm from "@/pages/BeamPage/components/BeamElementController/PointLoadUpdateForm";
 
 export default function BeamElementController() {
     return (
@@ -24,6 +25,8 @@ const ConditionalRenderer = () => {
             return <BeamForm/>;
         case "LOAD":
             return <PointLoadCreateForm/>;
+        case "LOAD_UPDATE":
+            return <PointLoadUpdateForm/>;
         case "SUPPORT":
             return <SupportCreateForm/>
         default:

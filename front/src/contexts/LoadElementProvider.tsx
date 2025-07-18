@@ -54,7 +54,7 @@ export const LoadElementProvider = ({children}: { children: ReactNode }) => {
             const newLoads = new Map(prev);
             const existingLoad = newLoads.get(id);
             if (existingLoad && existingLoad instanceof PointLoadDto) {
-                newLoads.set(id, {...existingLoad, ...load});
+                newLoads.set(id, load as PointLoadDto);
             }
             return newLoads;
         });
