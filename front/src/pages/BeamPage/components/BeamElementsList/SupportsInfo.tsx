@@ -1,15 +1,15 @@
 import {useSupportElementContext} from "@/hooks/contexts/useSupportElementContext";
 import {css} from "@emotion/react";
 
-
 export default function SupportsInfo() {
     const {supports} = useSupportElementContext();
 
     return (
         <div css={css`
+            margin-bottom: .4rem;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.4rem;
         `}>
             {Array.from(supports.entries()).map(([position, supportContext]) => (
                 <SupportInfo

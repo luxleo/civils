@@ -7,6 +7,8 @@ import {useBeamElementContext} from "@/hooks/contexts/useBeamElementContext";
 import Input from "@/components/common/Input";
 import type {SupportsType} from "@/types/domain/Beam";
 import {css} from "@emotion/react";
+import {toast, ToastContainer} from "react-toastify";
+import {BeamError} from "@/pages/BeamPage/constants/errorMessages";
 
 type SupportOption = {
     name: string;
@@ -47,7 +49,11 @@ export default function SupportCreateForm() {
 
     const onSubmit: SubmitHandler<Input> = (data) => {
         if (!isBeamInitialized) {
-            setError("position", {message: "보를 먼저 생성해주세요.", type: "manual"});
+            toast(BeamError.NOT_INITIALIZED + "Support", {
+                position: "top-left",
+                autoClose: 2500,
+                type: "error",
+            })
             return;
         }
         if (supports.has(data.position)) {
@@ -68,7 +74,7 @@ export default function SupportCreateForm() {
         <FormBaseContainer>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div css={S.FieldContainer}>
-                    <label css={S.FieldLabel}>지지대 타입</label>
+                    <label css={S.FieldLabel}>Support Type</label>
                     <Controller
                         name="supportType"
                         control={control}
@@ -92,6 +98,7 @@ export default function SupportCreateForm() {
                 />
                 <input type="submit" value="Submit"/>
             </form>
+            <ToastContainer/>
         </FormBaseContainer>
     );
 }
@@ -140,13 +147,13 @@ const S = {
     `,
     FieldLabel: css`
         display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #333;
+        font-weight: bold;
+        margin-bottom: .3rem;
     `,
     SelectContainer: css`
         width: 100%;
         display: flex;
+        justify-content: center;
         gap: 3px;
     `,
     SupportOptionItem: css`

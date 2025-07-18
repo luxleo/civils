@@ -11,34 +11,34 @@ export type SupportContext = {
 
 // Change LoadId to be an object type
 
-export type LoadDirection = 'upward' | 'downward';
+export type DirectionType = 'UP' | 'DOWN';
 
 interface ContextToLoad {
     toLoad(): Load;
 }
 
 export type PointLoadContext = {
-    type: 'pointLoad';
+    id: number;
     position: number;
     magnitude: number;
-    direction: LoadDirection;
+    direction: DirectionType;
 }
 
 export type DistributedLoadContext = {
-    type: 'distributedLoad';
+    id: number;
     startMagnitude: number;
     endMagnitude: number;
     startPosition: number;
     endPosition: number;
-    direction: LoadDirection;
+    direction: DirectionType;
 }
 
 export type AngledLoadContext = {
-    type: 'angledLoad';
+    id: number;
     magnitude: number;
     position: number;
     angle: number;
-    direction: LoadDirection;
+    direction: DirectionType;
 }
 
 export type LoadContext = (PointLoadContext | DistributedLoadContext | AngledLoadContext) & ContextToLoad;

@@ -2,7 +2,7 @@ import {css} from "@emotion/react";
 import {useContext} from "react";
 import {BeamControllerContext} from "@/contexts/BeamControllerProvider";
 import FormModeSelector from "@/pages/BeamPage/components/BeamElementController/FormModeSelector";
-import LoadCreateForm from "@/pages/BeamPage/components/BeamElementController/LoadCreateForm";
+import PointLoadCreateForm from "@/pages/BeamPage/components/BeamElementController/PointLoadCreateForm";
 import BeamForm from "@/pages/BeamPage/components/BeamElementController/BeamForm";
 import SupportCreateForm from "@/pages/BeamPage/components/BeamElementController/SupportCreateForm";
 
@@ -23,7 +23,7 @@ const ConditionalRenderer = () => {
         case "BEAM":
             return <BeamForm/>;
         case "LOAD":
-            return <LoadCreateForm/>;
+            return <PointLoadCreateForm/>;
         case "SUPPORT":
             return <SupportCreateForm/>
         default:

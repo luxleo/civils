@@ -17,6 +17,7 @@ export const SupportElementContext = createContext({} as SupportElementProviderP
 
 export const SupportElementProvider = ({children}: { children: ReactNode }) => {
     const [supports, setSupports] = useState<Map<number, SupportContext>>(new Map());
+    //TODO: supportId 추가하기, 수정 또는 삭제시 필요하다.
 
     const addSupport = useCallback((support: SupportContext) => {
         setSupports(prev => {
